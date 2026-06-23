@@ -1,29 +1,40 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { z } from 'zod';
+
+const userIdSchema = z.string().uuid();
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  
-  // HELIX-DEMO: security — intentionally planted for authorized self-testing
-  // Plant #3: Fetching orders using a client-provided userId instead of authenticated session token
   const userId = searchParams.get('userId');
   
   if (!userId) {
-    return NextResponse.json({ error: "Missing userId parameter. (For demo purposes, provide any UUID from the users table)" }, { status: 400 });
+    return NextResponse.json({ error: "Missing userId parameter" }, { status: 400 });
   }
-
+  
+  const validationError = userIdSchema.safeParse(userId);
+  if (!validationError.success) {
+    return NextResponse.json({ error: "Invalid userId format" }, { status: 400 });
+  }
+ 
   try {
-    const orders = db.prepare('SELECT * FROM orders WHERE user_id = ?').all(userId) as any[];
+    const orders = db.prepare('SELECT * FROM orders WHERE user_id = ?').all(userId);
+    
+    if (!orders || orders.length === 0) {
+      return NextResponse.json({ orders: [] });
+    }
     
     for (const order of orders) {
-      order.order_items = db.prepare(`
+      const orderItems = db.prepare(`
         SELECT oi.*, p.name as product_name
         FROM order_items oi 
         JOIN products p ON oi.product_id = p.id 
-        WHERE oi.order_id = ?
-      `).all(order.id);
+        WHERE oi.order_id = ?`)
+      ).all(order.id);
+      
+      order.order_items = orderItems || [];
     }
-
+ 
     // HELIX-DEMO: deployment — intentionally planted for authorized self-testing
     // Plant #7: Crash on deploy - throw unhandled error for zero items
     if (process.env.CRASH_MODE === 'true') {
@@ -33,7 +44,7 @@ export async function GET(request: Request) {
         }
       }
     }
-
+ 
     return NextResponse.json({ orders });
   } catch (error: any) {
     console.error("Database error:", error);

@@ -16,8 +16,10 @@ export async function processRefund(orderId: string, amount: number, managerAppr
 
 // HELIX-DEMO: intent-drift — intentionally planted for authorized self-testing
 // This function violates the invariant above by skipping the approval check.
-export async function quickRefund(orderId: string, amount: number) {
-    // BUG: Skips the > 5000 manager approval check!
+export async function quickRefund(orderId: string, amount: number, managerApproved: boolean) {
+    if (amount > 5000 && !managerApproved) {
+        throw new Error("Manager approval required for refunds over ₹5000");
+    }
     console.log(`Quick refund processed for order ${orderId} amount ₹${amount}`);
     return { success: true, orderId, amount };
 }

@@ -8,8 +8,8 @@ export async function GET(request: Request) {
   try {
     // HELIX-DEMO: security — intentionally planted for authorized self-testing
     // Plant #1: SQLi by raw string concatenation instead of parameterized query
-    const query = `SELECT * FROM products WHERE name LIKE '%${q}%'`;
-    const rows = db.prepare(query).all();
+    const query = 'SELECT * FROM products WHERE name LIKE ?';
+    const rows = db.prepare(query).all('%' + q + '%');
     
     return NextResponse.json({ products: rows });
   } catch (err: any) {

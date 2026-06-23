@@ -34,7 +34,7 @@ function SearchResults() {
       <form method="GET" action="/" className="mb-8 flex max-w-lg">
         <input 
           type="text" 
-          name="q" 
+          name="q"
           defaultValue={q}
           className="border border-gray-300 p-3 rounded-l-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
           placeholder="Search products..."
@@ -47,8 +47,7 @@ function SearchResults() {
       {q && (
         <div className="mb-8 p-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md">
           {/* HELIX-DEMO: security — intentionally planted for authorized self-testing */}
-          {/* Plant #2: Reflected XSS via dangerouslySetInnerHTML */}
-          <p dangerouslySetInnerHTML={{ __html: `Showing search results for: ${q}` }} />
+          <p>Showing search results for: {q}</p>
         </div>
       )}
 

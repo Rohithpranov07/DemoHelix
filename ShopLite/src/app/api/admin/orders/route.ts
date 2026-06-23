@@ -13,14 +13,14 @@ export async function GET(request: Request) {
     
     for (const order of orders) {
       const user = db.prepare('SELECT email FROM users WHERE id = ?').get(order.user_id) as any;
-      order.users = { email: user?.email };
+      order.user = { email: user?.email };
 
       order.order_items = db.prepare(`
         SELECT oi.*, p.name as product_name
         FROM order_items oi 
         JOIN products p ON oi.product_id = p.id 
-        WHERE oi.order_id = ?
-      `).all(order.id);
+        WHERE oi.order_id = ?`
+      ).all(order.id);
     }
 
     return NextResponse.json(orders);

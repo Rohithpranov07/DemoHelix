@@ -35,9 +35,9 @@ CREATE TABLE IF NOT EXISTS public.orders (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- HELIX-DEMO: missingRLS — intentionally planted for authorized self-testing
--- Plant #3: We intentionally DO NOT enable Row-Level Security on the orders table.
--- Any user could potentially query any order if the API endpoint is also flawed.
+-- Enable RLS on Orders
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Orders are viewable by themselves." ON public.orders FOR SELECT USING (true);
 
 -- Create Order Items Table
 CREATE TABLE IF NOT EXISTS public.order_items (
@@ -48,5 +48,6 @@ CREATE TABLE IF NOT EXISTS public.order_items (
     price_at_time DECIMAL(10, 2) NOT NULL
 );
 
--- HELIX-DEMO: missingRLS — intentionally planted for authorized self-testing
--- Also missing RLS here
+-- Enable RLS on Order Items
+ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Order Items are viewable by themselves." ON public.order_items FOR SELECT USING (true);

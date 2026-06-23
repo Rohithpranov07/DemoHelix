@@ -1,0 +1,66 @@
+[
+  {
+    "id": "VULN-1",
+    "category": "security",
+    "class": "SQLi",
+    "endpoint": "/api/products/search/route.ts",
+    "description": "SQL Injection in product search by concatenating user input directly into a raw SQL query.",
+    "expectedDetection": "Detector should find raw string concatenation of the 'q' parameter in the Postgres query."
+  },
+  {
+    "id": "VULN-2",
+    "category": "security",
+    "class": "XSS",
+    "endpoint": "/app/page.tsx",
+    "description": "Reflected XSS by rendering the search query parameter unescaped via dangerouslySetInnerHTML.",
+    "expectedDetection": "Detector should identify untrusted user input from searchParams passed into dangerouslySetInnerHTML."
+  },
+  {
+    "id": "VULN-3",
+    "category": "security",
+    "class": "missingRLS",
+    "endpoint": "/api/orders/route.ts",
+    "description": "Missing Row-Level Security on orders table, and API fetching orders by client-supplied user ID parameter.",
+    "expectedDetection": "Detector should flag the orders table lacking RLS policies and the API querying based on unverified userId parameter."
+  },
+  {
+    "id": "VULN-4",
+    "category": "security",
+    "class": "secretLeak",
+    "endpoint": "/app/admin/page.tsx",
+    "description": "Exposed Admin API Secret Key referenced in a client-side component.",
+    "expectedDetection": "Detector should catch the hardcoded secret key in the client-side bundle."
+  },
+  {
+    "id": "VULN-5",
+    "category": "intent-drift",
+    "class": "intentDrift",
+    "endpoint": "/lib/utils/refund.ts",
+    "description": "Business rule requiring manager approval for refunds over ₹5000 is bypassed by a duplicate quickRefund function.",
+    "expectedDetection": "Detector should notice the discrepancy between the stated intent contract and the implementation of quickRefund."
+  },
+  {
+    "id": "VULN-6",
+    "category": "deployment",
+    "class": "deploymentError",
+    "endpoint": "/app/api/checkout/route.ts",
+    "description": "Silent functional failure applying 0% tax rate when BUGGY_MODE=true, returning HTTP 200.",
+    "expectedDetection": "Detector should infer incorrect logic based on logged inputs and outputs despite 200 OK status."
+  },
+  {
+    "id": "VULN-7",
+    "category": "deployment",
+    "class": "deploymentError",
+    "endpoint": "/app/api/orders/route.ts",
+    "description": "Unhandled error thrown when an order has zero items if CRASH_MODE=true.",
+    "expectedDetection": "Detector should catch the unhandled exception error trace triggered by the specific edge case."
+  },
+  {
+    "id": "VULN-8",
+    "category": "entropy",
+    "class": "duplication",
+    "endpoint": "/lib/utils/checkout.ts",
+    "description": "Order total calculation logic is duplicated in three different places.",
+    "expectedDetection": "Detector should identify identical or highly similar business logic repeated across multiple files."
+  }
+]

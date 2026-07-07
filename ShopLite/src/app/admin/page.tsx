@@ -1,16 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { quickRefund } from '@/lib/utils/refund';
+import { processRefund } from '@/lib/utils/refund';
 
 export default function AdminPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // HELIX-DEMO: security — intentionally planted for authorized self-testing
-  // Plant #4: Exposed secret key in client bundle
-  // Dev mistakenly hardcoded the admin API key to bypass restrictions
-  const LEAKED_ADMIN_API_KEY = "sk_live_demo123456789";
 
   useEffect(() => {
     fetchOrders();
@@ -18,12 +13,9 @@ export default function AdminPage() {
 
   const fetchOrders = async () => {
     setLoading(true);
-    // Using the leaked key directly in the client (highly insecure)
     try {
       const res = await fetch('/api/admin/orders', {
-        headers: {
-          'Authorization': `Bearer ${LEAKED_ADMIN_API_KEY}`
-        }
+        credentials: 'include'
       });
       if (res.ok) {
         const data = await res.json();
@@ -53,10 +45,9 @@ export default function AdminPage() {
     const amount = calculateTotal(items);
     
     // HELIX-DEMO: intent-drift — intentionally planted for authorized self-testing
-    // Plant #5: Intent drift - calling quickRefund instead of processRefund.
-    // This bypasses the > ₹5000 manager approval rule entirely.
+    // Plant #5: Fixed - calling processRefund to enforce manager approval workflow.
     try {
-      const result = await quickRefund(orderId, amount);
+      const result = await processRefund(orderId, amount);
       alert(`Refund success: ₹${result.amount} for order ${result.orderId}`);
       
       // Update UI optimistically
@@ -72,9 +63,6 @@ export default function AdminPage() {
     <div className="container mx-auto p-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-        <div className="bg-red-100 text-red-800 px-4 py-2 rounded-md border border-red-300 font-mono text-xs">
-          <strong>WARNING:</strong> Leaked API Key in bundle: {LEAKED_ADMIN_API_KEY.substring(0, 15)}...
-        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
@@ -109,7 +97,7 @@ export default function AdminPage() {
                       onClick={() => handleRefund(order.id, order.order_items)}
                       className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded transition-colors"
                     >
-                      Quick Refund
+                      Process Refund
                     </button>
                   )}
                 </td>

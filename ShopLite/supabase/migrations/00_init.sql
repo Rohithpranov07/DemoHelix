@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS public.users (
 
 -- Enable RLS on Users
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users are viewable by themselves." ON public.users FOR SELECT USING (true); -- In a real app this would check auth
+CREATE POLICY "Users are viewable by themselves." ON public.users FOR SELECT USING (auth.uid() = id);
 
 -- Create Orders Table
 CREATE TABLE IF NOT EXISTS public.orders (
@@ -35,9 +35,9 @@ CREATE TABLE IF NOT EXISTS public.orders (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- HELIX-DEMO: missingRLS — intentionally planted for authorized self-testing
--- Plant #3: We intentionally DO NOT enable Row-Level Security on the orders table.
--- Any user could potentially query any order if the API endpoint is also flawed.
+-- Enable RLS on Orders
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own orders." ON public.orders FOR SELECT USING (auth.uid() = user_id);
 
 -- Create Order Items Table
 CREATE TABLE IF NOT EXISTS public.order_items (
@@ -48,5 +48,10 @@ CREATE TABLE IF NOT EXISTS public.order_items (
     price_at_time DECIMAL(10, 2) NOT NULL
 );
 
--- HELIX-DEMO: missingRLS — intentionally planted for authorized self-testing
--- Also missing RLS here
+-- Enable RLS on Order Items
+ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view items in their own orders." ON public.order_items FOR SELECT USING (
+    EXISTS (
+        SELECT 1 FROM public.orders WHERE public.orders.id = public.order_items.order_id AND public.orders.user_id = auth.uid()
+    )
+);

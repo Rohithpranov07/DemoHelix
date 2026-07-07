@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
   
-  if (authHeader !== 'Bearer sk_live_demo123456789') {
+  if (authHeader !== `Bearer ${process.env.ADMIN_API_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

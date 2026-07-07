@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 // HELIX-DEMO: entropy — intentionally planted for authorized self-testing
@@ -10,10 +11,6 @@ function calculateOrderTotal(items: { price: number, quantity: number }[]) {
     let tax = total * 0.18; // 18% tax
     
     // HELIX-DEMO: deployment — intentionally planted for authorized self-testing
-    // Plant #6: Bad deploy - silently apply wrong tax rate
-    if (process.env.BUGGY_MODE === 'true') {
-        tax = 0; // BUG: Silently apply 0% tax rate
-    }
     
     return total + tax;
 }
@@ -22,6 +19,13 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         const { items } = body;
+        
+        // INV-SEC-001: Verify authentication token
+        const cookieStore = await cookies();
+        const token = cookieStore.get('auth_token');
+        if (!token) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
         
         if (!items || !Array.isArray(items)) {
              return NextResponse.json({ error: "Invalid items array" }, { status: 400 });

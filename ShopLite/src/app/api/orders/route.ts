@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { verifyAuth } from '@/lib/auth';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   
-  // HELIX-DEMO: security — intentionally planted for authorized self-testing
-  // Plant #3: Fetching orders using a client-provided userId instead of authenticated session token
-  const userId = searchParams.get('userId');
-  
-  if (!userId) {
-    return NextResponse.json({ error: "Missing userId parameter. (For demo purposes, provide any UUID from the users table)" }, { status: 400 });
+  // Verify authentication and authorization
+  const authResult = await verifyAuth(request);
+  if (!authResult.success) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = authResult.userId;
 
   try {
+    // Enforce Row-Level Security by strictly filtering by authenticated user ID
     const orders = db.prepare('SELECT * FROM orders WHERE user_id = ?').all(userId) as any[];
     
     for (const order of orders) {
@@ -22,16 +23,6 @@ export async function GET(request: Request) {
         JOIN products p ON oi.product_id = p.id 
         WHERE oi.order_id = ?
       `).all(order.id);
-    }
-
-    // HELIX-DEMO: deployment — intentionally planted for authorized self-testing
-    // Plant #7: Crash on deploy - throw unhandled error for zero items
-    if (process.env.CRASH_MODE === 'true') {
-      for (const order of orders) {
-        if (!order.order_items || order.order_items.length === 0) {
-          throw new Error(`CRITICAL: Order ${order.id} has zero items! Unhandled exception triggered by CRASH_MODE.`);
-        }
-      }
     }
 
     return NextResponse.json({ orders });

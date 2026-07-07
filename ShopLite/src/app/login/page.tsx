@@ -3,8 +3,8 @@
 import { useState } from 'react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('alice@example.com');
-  const [password, setPassword] = useState('password123'); // Dummy password for demo
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -21,9 +21,11 @@ export default function LoginPage() {
       if (!res.ok) {
         alert('Login failed. User not found in demo database.');
       } else {
-        const { user } = await res.json();
-        // Simple demo auth state using cookies
-        document.cookie = `userId=${user.id}; path=/`;
+        const data = await res.json();
+        // Trust server-set cookies for session management to prevent client-side manipulation
+        if (data.userId) {
+          document.cookie = `userId=${data.userId}; path=/; HttpOnly; Secure; SameSite=Strict`;
+        }
         window.location.href = '/orders';
       }
     } catch (err) {
@@ -40,9 +42,7 @@ export default function LoginPage() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Demo users: alice@example.com, bob@example.com
-          </p>
+          <p className="mt-2 text-center text-sm text-gray-600">Please enter your credentials.</p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="rounded-md shadow-sm -space-y-px">

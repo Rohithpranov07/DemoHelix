@@ -7,7 +7,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string>('');
+  const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -20,14 +20,21 @@ export default function OrdersPage() {
       return;
     }
 
-    setUserId(id);
-    fetchOrders(id);
+    // Invariant [auth-check]: Trust the server-validated session ID from cookie, do not allow client override.
+    // Invariant [input-validation]: Ensure ID format is valid before use.
+    if (/^[0-9a-fA-F-]{36}$/.test(id)) {
+      setUserId(id);
+      fetchOrders(id);
+    } else {
+      setError('Invalid session identifier.');
+    }
   }, [router]);
 
   const fetchOrders = async (id: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/orders?userId=${id}`);
+      // Invariant [idor-prevention]: Remove userId from query string; rely on server-side session verification.
+      const res = await fetch(`/api/orders`);
       const data = await res.json();
       
       if (data.error) {
@@ -44,38 +51,11 @@ export default function OrdersPage() {
     }
   };
 
-  const handleImpersonate = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchOrders(userId);
-  };
-
   if (loading && orders.length === 0) return <div className="p-8 text-center text-xl">Loading orders...</div>;
 
   return (
     <div className="container mx-auto p-8">
       <h1 className="text-3xl font-bold mb-6">Your Orders</h1>
-
-      {/* HELIX-DEMO: security — intentionally planted for authorized self-testing */}
-      {/* Plant #3 UI: Allows user to modify the userId being sent to the vulnerable API */}
-      <div className="mb-8 p-6 bg-red-50 border border-red-200 rounded-lg">
-        <h3 className="text-red-800 font-bold mb-2 text-lg">⚠️ Demo Exploit Panel: Missing RLS</h3>
-        <p className="text-sm text-red-700 mb-4">
-          Because the /api/orders endpoint trusts the client-provided userId parameter and the 
-          database lacks Row-Level Security, you can view anyone's orders by changing the ID below.
-        </p>
-        <form onSubmit={handleImpersonate} className="flex gap-2">
-          <input 
-            type="text" 
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-            className="border p-2 rounded w-96 font-mono text-sm"
-            placeholder="User UUID"
-          />
-          <button type="submit" className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold transition-colors">
-            Fetch Orders As User
-          </button>
-        </form>
-      </div>
 
       {error && (
         <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-md">
